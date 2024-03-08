@@ -51,7 +51,8 @@ class UberEatsOrderSummarySensor(Entity):
         self._device_class = "running"
         self._unique_id = f"{DOMAIN}_{name}"
         self._api = api
-        
+        self._orders = []
+
     @property
     def name(self):
         """Return the name of the sensor."""
@@ -72,17 +73,14 @@ class UberEatsOrderSummarySensor(Entity):
         """Return the unique id."""
         return self._unique_id
 
-    def update(self):
-        response = self._api.get_deliveries()
-        self._attributes["orders"] = response["data"].get("orders", [])
-    
     @property
     def extra_state_attributes(self):
         """Return the state attributes of the sensor."""
-        return {
-            "current_order": self._current_order,
-            # 你可以在這裡添加其他你想要顯示的屬性
-        }
+        return {"orders": self._orders}
+
+    def update(self):
+        response = self._api.get_deliveries()
+        self._attributes["orders"] = response["data"].get("orders", [])
 
 
 class UberEatsDeliveriesSensor(Entity):
@@ -96,7 +94,7 @@ class UberEatsDeliveriesSensor(Entity):
         self._device_class = "running"
         self._unique_id = f"{DOMAIN}_{name}"
         self._api = api
-        self._order_summary_sensor = order_summary_sensor
+        self._order_summary_sensor: UberEatsOrderSummarySensor = order_summary_sensor
 
     @property
     def name(self):
@@ -130,7 +128,7 @@ class UberEatsDeliveriesSensor(Entity):
 
     def update(self):
         _LOGGER.debug(f"Updating {self._name} sensor")
-        orders = self._order_summary_sensor.attributes.get("orders", [])
+        orders = self._order_summary_sensor.extra_state_attributes.get("orders", [])
         order_index = int(self._name[-1])  # 從名稱中獲取訂單索引，訂單想超過9改self._name.split(' ')[1]
         if order_index < len(orders):
             _LOGGER.debug(f"{self._name} : {orders[order_index]}")
@@ -148,4 +146,4 @@ class UberEatsDeliveriesSensor(Entity):
                 self._state_attributes["Courier Location"] = f'{map_entity[0]["latitude"]},{map_entity[0]["longitude"]}'
 
         else:
-            _LOGGER.error("Unable to log in")
+            _LOGGER.error("Order index out of range")
