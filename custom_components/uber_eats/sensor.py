@@ -32,26 +32,71 @@ SCAN_INTERVAL = timedelta(seconds=20)
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    """Set up Uber Eats sensor based on a config entry."""
     api = hass.data[DOMAIN]
-    response = api.get_deliveries()
-    orders = response["data"].get("orders", [])
-    entities = [UberEatsDeliveriesSensor(f"Order {i}", orders, api) for i in range(1, 4)]
+    order_summary_sensor = UberEatsOrderSummarySensor("Order Summary", api)
+    async_add_entities([order_summary_sensor], True)
+
+    entities = [UberEatsDeliveriesSensor(f"Order {i}", order_summary_sensor, api) for i in range(1, 4)]
     async_add_entities(entities, True)
+
+
+class UberEatsOrderSummarySensor(Entity):
+
+    def __init__(self, name, api):
+        self._name = name
+        self._icon = "mdi:shopping-search"
+        self._state = 0
+        self._state_attributes = {}
+        self._unit_of_measurement = None
+        self._device_class = "running"
+        self._unique_id = f"{DOMAIN}_{name}"
+        self._api = api
+        
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self._name
+
+    @property
+    def icon(self):
+        """Icon to use in the frontend, if any."""
+        return self._icon
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return self._unit_of_measurement
+
+    @property
+    def unique_id(self):
+        """Return the unique id."""
+        return self._unique_id
+
+    def update(self):
+        response = self._api.get_deliveries()
+        self._attributes["orders"] = response["data"].get("orders", [])
+    
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes of the sensor."""
+        return {
+            "current_order": self._current_order,
+            # 你可以在這裡添加其他你想要顯示的屬性
+        }
 
 
 class UberEatsDeliveriesSensor(Entity):
 
-    def __init__(self, name, orders, api):
+    def __init__(self, name, order_summary_sensor, api):
         self._name = name
-        self._icon = "mdi:truck-delivery"
+        self._icon = "mdi:motorbike"
         self._state = ""
         self._state_attributes = {}
         self._unit_of_measurement = None
         self._device_class = "running"
         self._unique_id = f"{DOMAIN}_{name}"
         self._api = api
-        self._orders = orders
+        self._order_summary_sensor = order_summary_sensor
 
     @property
     def name(self):
@@ -84,10 +129,12 @@ class UberEatsDeliveriesSensor(Entity):
         return self._unique_id
 
     def update(self):
-        _LOGGER.info(f"Updating {self._name} sensor")
+        _LOGGER.debug(f"Updating {self._name} sensor")
+        orders = self._order_summary_sensor.attributes.get("orders", [])
         order_index = int(self._name[-1])  # 從名稱中獲取訂單索引，訂單想超過9改self._name.split(' ')[1]
-        if order_index < len(self._orders["orders"]):
-            order = self._orders["orders"][order_index]
+        if order_index < len(orders):
+            _LOGGER.debug(f"{self._name} : {orders[order_index]}")
+            order = orders[order_index]
             current_progress = order["feedCards"][0]["status"]["currentProgress"]
             self._state = ORDER_STATES.get(current_progress, f"Unknown currentProgress ({current_progress})")
             self._state_attributes["ETA"] = order["feedCards"][0]["status"]["title"]
