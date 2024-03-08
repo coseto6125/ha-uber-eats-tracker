@@ -1,0 +1,12 @@
+{
+  "domain": "uber_eats",
+  "name": "Uber Eats",
+  "version": "1.0.0",
+  "documentation": "https://github.com/coseto6125/ha-uber-eats-aiohttp",
+  "issue_tracker": "https://github.com/coseto6125/ha-uber-eats-aiohttp/issues",
+  "codeowners": ["@coseto6125"],
+  "requirements": [],
+  "iot_class": "cloud_polling",
+  "dependencies": [],
+  "config_flow": true
+}
