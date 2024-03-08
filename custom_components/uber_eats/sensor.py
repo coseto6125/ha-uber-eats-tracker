@@ -8,7 +8,7 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import CONF_TOKEN
 from homeassistant.helpers.entity import Entity
 
-from .const import DOMAIN, SENSOR_NAME
+from .const import DOMAIN, ORDER_STATES
 
 NAME = DOMAIN
 ISSUEURL = "https://github.com/coseto6125/ha-uber-eats-aiohttp/issues"
@@ -34,20 +34,24 @@ SCAN_INTERVAL = timedelta(seconds=20)
 async def async_setup_entry(hass, entry, async_add_entities):
     """Set up Uber Eats sensor based on a config entry."""
     api = hass.data[DOMAIN]
-    async_add_entities([UberEatsDeliveriesSensor(SENSOR_NAME, api)], True)
+    response = api.get_deliveries()
+    orders = response["data"].get("orders", [])
+    entities = [UberEatsDeliveriesSensor(f"Order {i}", orders, api) for i in range(1, 4)]
+    async_add_entities(entities, True)
 
 
 class UberEatsDeliveriesSensor(Entity):
 
-    def __init__(self, name, api):
+    def __init__(self, name, orders, api):
         self._name = name
         self._icon = "mdi:truck-delivery"
         self._state = ""
         self._state_attributes = {}
         self._unit_of_measurement = None
         self._device_class = "running"
-        self._unique_id = DOMAIN
+        self._unique_id = f"{DOMAIN}_{name}"
         self._api = api
+        self._orders = orders
 
     @property
     def name(self):
@@ -80,40 +84,21 @@ class UberEatsDeliveriesSensor(Entity):
         return self._unique_id
 
     def update(self):
-        _LOGGER.debug("Checking login validity")
-        if self._api.check_auth():
-            _LOGGER.debug("Fetching deliveries")
-            response = self._api.get_deliveries()
-            if response["data"].get("orders"):
-                _LOGGER.debug(response["data"]["orders"])
-                for order in response["data"]["orders"]:
-                    if order["feedCards"][0]["status"]["currentProgress"] == 1:
-                        self._state = "Preparing your order"
-                    elif order["feedCards"][0]["status"]["currentProgress"] == 2:
-                        self._state = "Preparing your order"
-                    elif order["feedCards"][0]["status"]["currentProgress"] == 3:
-                        self._state = "Heading your way"
-                    elif order["feedCards"][0]["status"]["currentProgress"] == 4:
-                        self._state = "Almost here"
-                    else:
-                        self._state = (f"Unknown currentProgress ({(order["feedCards"][0]["status"]["currentProgress"])})")
+        _LOGGER.info(f"Updating {self._name} sensor")
+        order_index = int(self._name[-1])  # 從名稱中獲取訂單索引，訂單想超過9改self._name.split(' ')[1]
+        if order_index < len(self._orders["orders"]):
+            order = self._orders["orders"][order_index]
+            current_progress = order["feedCards"][0]["status"]["currentProgress"]
+            self._state = ORDER_STATES.get(current_progress, f"Unknown currentProgress ({current_progress})")
+            self._state_attributes["ETA"] = order["feedCards"][0]["status"]["title"]
+            self._state_attributes["Order Status Description"] = order["feedCards"][0]["status"]["timelineSummary"]
+            self._state_attributes["Order Status"] = order["feedCards"][0]["status"]["currentProgress"]
+            self._state_attributes["Restaurant Name"] = order["activeOrderOverview"]["title"]
+            self._state_attributes["Courier Name"] = order["contacts"][0]["title"]
 
-                    # self._state_attributes['Order Id'] = order['uuid']
-                    self._state_attributes["ETA"] = order["feedCards"][0]["status"]["title"]
-                    self._state_attributes["Order Status Description"] = order["feedCards"][0]["status"][
-                        "timelineSummary"
-                    ]
-                    self._state_attributes["Order Status"] = order["feedCards"][0]["status"]["currentProgress"]
-                    self._state_attributes["Restaurant Name"] = order["activeOrderOverview"]["title"]
-                    self._state_attributes["Courier Name"] = order["contacts"][0]["title"]
+            map_entity = order["feedCards"][1].get("mapEntity")
+            if map_entity and map_entity[0]:
+                self._state_attributes["Courier Location"] = f'{map_entity[0]["latitude"]},{map_entity[0]["longitude"]}'
 
-                    if order["feedCards"][1]["mapEntity"]:
-                        if order["feedCards"][1]["mapEntity"][0]:
-                            self._state_attributes["Courier Location"] = (
-                                str(order["feedCards"][1]["mapEntity"][0]["latitude"])
-                                + ","
-                                + str(order["feedCards"][1]["mapEntity"][0]["longitude"])
-                            )
-            else:
-                self._state = "None"
-        _LOGGER.error("Unable to log in")
+        else:
+            _LOGGER.error("Unable to log in")
