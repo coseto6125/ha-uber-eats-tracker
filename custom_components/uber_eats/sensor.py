@@ -96,9 +96,7 @@ class UberEatsDeliveriesSensor(Entity):
                     elif order["feedCards"][0]["status"]["currentProgress"] == 4:
                         self._state = "Almost here"
                     else:
-                        self._state = (
-                            "Unknown currentProgress (" + str(order["feedCards"][0]["status"]["currentProgress"]) + ")"
-                        )
+                        self._state = (f"Unknown currentProgress ({(order["feedCards"][0]["status"]["currentProgress"])})")
 
                     # self._state_attributes['Order Id'] = order['uuid']
                     self._state_attributes["ETA"] = order["feedCards"][0]["status"]["title"]
@@ -118,5 +116,4 @@ class UberEatsDeliveriesSensor(Entity):
                             )
             else:
                 self._state = "None"
-        else:
-            _LOGGER.error("Unable to log in")
+        _LOGGER.error("Unable to log in")

@@ -1,0 +1,31 @@
+{
+    "title": "UberEats",
+    "config": {
+        "step": {
+            "user": {
+                "title": "連接到你的 UberEats",
+                "description": "請輸入你的 sid_token",
+                "data": {
+                    "sid_token": "sid_token"
+                }
+            }
+        },
+        "error": {
+            "invalid_sid_token": "無效的 sid_token"
+        },
+        "abort": {
+            "already_configured": "UberEats 已經被配置"
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "修改 sid",
+                "description": "請輸入新的 sid_token",
+                "data": {
+                    "sid_token": "sid_token"
+                }
+            }
+        }
+    }
+}
