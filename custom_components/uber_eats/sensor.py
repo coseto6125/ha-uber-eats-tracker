@@ -43,13 +43,12 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class UberEatsOrderSummarySensor(Entity):
 
     def __init__(self, name, api):
-        self._name = name
+        self._name = self._unique_id = f"{DOMAIN}_summary_{name}"
         self._icon = "mdi:shopping-search"
         self._state = 0
         self._state_attributes = {}
         self._unit_of_measurement = None
         self._device_class = "running"
-        self._unique_id = f"{DOMAIN}_{name}"
         self._api = api
         self._orders = []
 
@@ -86,13 +85,12 @@ class UberEatsOrderSummarySensor(Entity):
 class UberEatsDeliveriesSensor(Entity):
 
     def __init__(self, name, order_summary_sensor, api):
-        self._name = name
+        self._unique_id = self._name = f"{DOMAIN}_tracker_{name}"
         self._icon = "mdi:motorbike"
         self._state = ""
         self._state_attributes = {}
         self._unit_of_measurement = None
         self._device_class = "running"
-        self._unique_id = f"{DOMAIN}_{name}"
         self._api = api
         self._order_summary_sensor: UberEatsOrderSummarySensor = order_summary_sensor
 
