@@ -72,6 +72,10 @@ class UberEatsOrderSummarySensor(Entity):
     @property
     def state(self):
         return self._state
+    
+    @property
+    def orders(self):
+        return self._orders
 
     @property
     def extra_state_attributes(self):
