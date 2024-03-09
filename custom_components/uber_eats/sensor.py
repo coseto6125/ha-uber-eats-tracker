@@ -55,38 +55,27 @@ class UberEatsOrderSummarySensor(Entity):
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return self._name
 
     @property
     def icon(self):
-        """Icon to use in the frontend, if any."""
         return self._icon
 
     @property
     def unit_of_measurement(self):
-        """Return the unit of measurement."""
         return self._unit_of_measurement
 
     @property
     def unique_id(self):
-        """Return the unique id."""
         return self._unique_id
 
     @property
-    def extra_state_attributes(self):
-        """Return the state attributes of the sensor."""
-        return {"orders": self._orders}
-
-    @property
     def state(self):
-        """Return the state of the device."""
         return self._state
-
+    
     @property
-    def orders(self):
-        """Return the state attributes of the sensor."""
-        return self._orders
+    def extra_state_attributes(self):
+        return {"訂單": self._state}
 
     def update(self):
         response = self._api.get_deliveries()
@@ -113,37 +102,34 @@ class UberEatsDeliveriesSensor(Entity):
 
     @property
     def name(self):
-        """Return the name of the sensor."""
         return self._name
 
     @property
     def icon(self):
-        """Icon to use in the frontend, if any."""
         return self._icon
 
     @property
     def state(self):
-        """Return the state of the device."""
         return self._state
 
     @property
     def extra_state_attributes(self):
-        """Return the state attributes of the sensor."""
+        return self._state_attributes
+    
+    @property
+    def state_attributes(self):
         return self._state_attributes
 
     @property
     def unit_of_measurement(self):
-        """Return the unit of measurement."""
         return self._unit_of_measurement
 
     @property
     def unique_id(self):
-        """Return the unique id."""
         return self._unique_id
 
     @property
     def msg(self):
-        """Return the unique id."""
         return self._msg
 
     def update(self):
