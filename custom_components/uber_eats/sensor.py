@@ -72,7 +72,7 @@ class UberEatsOrderSummarySensor(Entity):
     @property
     def state(self):
         return self._state
-    
+
     @property
     def extra_state_attributes(self):
         return {"訂單": self._state}
@@ -94,8 +94,7 @@ class UberEatsDeliveriesSensor(Entity):
         self._unique_id = self._name = f"{DOMAIN}_tracker_{name}"
         self._icon = "mdi:motorbike"
         self._state = "目前無訂單"
-        self._msg = "目前無訂單"
-        self._state_attributes = {}
+        self._state_attributes = {"msg": "目前無訂單"}
         self._unit_of_measurement = None
         self._device_class = "running"
         self._order_summary_sensor: UberEatsOrderSummarySensor = order_summary_sensor
@@ -114,8 +113,8 @@ class UberEatsDeliveriesSensor(Entity):
 
     @property
     def extra_state_attributes(self):
-        return self._state_attributes
-    
+        return {k: v for k, v in self._state_attributes.items() if k != "msg"}
+
     @property
     def state_attributes(self):
         return self._state_attributes
@@ -130,7 +129,7 @@ class UberEatsDeliveriesSensor(Entity):
 
     @property
     def msg(self):
-        return self._msg
+        return self.state_attributes["msg"]
 
     def update(self):
         _LOGGER.debug(f"Updating {self._name} sensor")
@@ -158,18 +157,18 @@ class UberEatsDeliveriesSensor(Entity):
         self._state_attributes["訂餐金額"] = money = info[5]["orderSummary"]["total"].replace(".00", "")
         self._state_attributes["額外描述"] = sub_msg = info[0]["status"]["statusSummary"]["text"]
 
-        self._msg = f"訂單 {restaurant}，訂餐時間：{order_time}。\n"
+        self.state_attributes["msg"] = f"訂單 {restaurant}，訂餐時間：{order_time}。\n"
         match current_progress:
             case 1:
-                self._msg += "店家正在準備餐點。"
+                self.state_attributes["msg"] += "店家正在準備餐點。"
             case 2:
-                self._msg += f"外送員 {deliver} 正前往取餐。"
+                self.state_attributes["msg"] += f"外送員 {deliver} 正前往取餐。"
             case 3:
-                self._msg += f"外送員 {deliver} 正在送餐中。"
+                self.state_attributes["msg"] += f"外送員 {deliver} 正在送餐中。"
             case 4:
-                self._msg += f"外送員 {deliver} 即將抵達，金額 {money}。"
+                self.state_attributes["msg"] += f"外送員 {deliver} 即將抵達，金額 {money}。"
             case _:
-                self._msg += unknown_progress
+                self.state_attributes["msg"] += unknown_progress
 
         if (mt := "Lastest arrival by ") in sub_msg:
-            self._msg += f"\n預估最晚送達時間：{sub_msg.replace(mt,'')}"
+            self.state_attributes["msg"] += f"\n預估最晚送達時間：{sub_msg.replace(mt,'')}"
