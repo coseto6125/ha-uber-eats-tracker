@@ -104,7 +104,8 @@ class UberEatsDeliveriesSensor(Entity):
     def __init__(self, name, order_summary_sensor):
         self._unique_id = self._name = f"{DOMAIN}_tracker_{name}"
         self._icon = "mdi:motorbike"
-        self._state = ""
+        self._state = "目前無訂單"
+        self._msg = "目前無訂單"
         self._state_attributes = {}
         self._unit_of_measurement = None
         self._device_class = "running"
@@ -158,7 +159,6 @@ class UberEatsDeliveriesSensor(Entity):
                 self._state_attributes["Courier Location"] = f'{map_entity[0]["latitude"]},{map_entity[0]["longitude"]}'
 
         else:
-            self._msg = "目前沒有訂單"
             _LOGGER.debug("Order index out of range")
 
     def parse_order(self, order):
