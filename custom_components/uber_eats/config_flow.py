@@ -7,24 +7,17 @@ from .const import DOMAIN
 
 class UberEatsOptionsFlow(config_entries.OptionsFlow):
 
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: config_entries.ConfigEntry):
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         if user_input is not None:
-            return self.async_create_entry(title="修改 sid", data=user_input)
-
-        return self.async_show_form(
-            step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional("sid_token", default=""): str,
-                }
-            ),
-            description_placeholders={
-                "sid_token": "請輸入要重設的 sid_token",
-            },
-        )
+            return self.async_create_entry(title="Uber Eats Tracker", data=user_input)
+        data = self.config_entry.options.get("sid_token", "")
+        schema = {
+            vol.Optional("sid_token", default=data): str,
+        }
+        return self.async_show_form(step_id="init", data_schema=vol.Schema(schema))
 
 
 class UberEatsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -37,12 +30,12 @@ class UberEatsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 step_id="user",
                 data_schema=vol.Schema(
                     {
-                        vol.Required("sid_token"): str,
+                        vol.Required(
+                            "invalid_sid_token",
+                            description={"suggested_value": ""},
+                        ): str,
                     }
                 ),
-                description_placeholders={
-                    "sid_token": "請輸入要設置的 sid_token",
-                },
             )
 
         errors = {}
