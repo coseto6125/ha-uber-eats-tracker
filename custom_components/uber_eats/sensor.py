@@ -1,4 +1,5 @@
 """Uber Eats sensors"""
+
 import logging
 from datetime import timedelta
 
@@ -36,7 +37,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     order_summary_sensor = UberEatsOrderSummarySensor("Order Summary", api)
     async_add_entities([order_summary_sensor], True)
 
-    entities = [UberEatsDeliveriesSensor(f"Order {i}", order_summary_sensor, api) for i in range(1, 4)]
+    entities = [UberEatsDeliveriesSensor(f"Order {i}", order_summary_sensor) for i in range(1, 4)]
     async_add_entities(entities, True)
 
 
@@ -77,21 +78,36 @@ class UberEatsOrderSummarySensor(Entity):
         """Return the state attributes of the sensor."""
         return {"orders": self._orders}
 
+    @property
+    def state(self):
+        """Return the state of the device."""
+        return self._state
+
+    @property
+    def orders(self):
+        """Return the state attributes of the sensor."""
+        return self._orders
+
     def update(self):
-        response = self._api.get_deliveries()
-        self._attributes["orders"] = response["data"].get("orders", [])
+        # response = self._api.get_deliveries()
+        # self._orders = response["data"].get("orders", [])
+        # debug
+        from pathlib import Path
+
+        self._orders = eval(Path("test2.json").read_text(encoding="utf-8-sig"))[0]["data"]["orders"]
+        # -end debug
+        self._state = len(self._orders)
 
 
 class UberEatsDeliveriesSensor(Entity):
 
-    def __init__(self, name, order_summary_sensor, api):
+    def __init__(self, name, order_summary_sensor):
         self._unique_id = self._name = f"{DOMAIN}_tracker_{name}"
         self._icon = "mdi:motorbike"
         self._state = ""
         self._state_attributes = {}
         self._unit_of_measurement = None
         self._device_class = "running"
-        self._api = api
         self._order_summary_sensor: UberEatsOrderSummarySensor = order_summary_sensor
 
     @property
@@ -124,24 +140,50 @@ class UberEatsDeliveriesSensor(Entity):
         """Return the unique id."""
         return self._unique_id
 
+    @property
+    def msg(self):
+        """Return the unique id."""
+        return self._msg
+
     def update(self):
         _LOGGER.debug(f"Updating {self._name} sensor")
-        orders = self._order_summary_sensor.extra_state_attributes.get("orders", [])
-        order_index = int(self._name[-1])  # 從名稱中獲取訂單索引，訂單想超過9改self._name.split(' ')[1]
-        if order_index < len(orders):
+        order_index = int(self._name[-1]) - 1  # 從名稱中獲取訂單索引
+        orders: list[dict] = self._order_summary_sensor.orders
+        if order_index < self._order_summary_sensor.state:
             _LOGGER.debug(f"{self._name} : {orders[order_index]}")
             order = orders[order_index]
-            current_progress = order["feedCards"][0]["status"]["currentProgress"]
-            self._state = ORDER_STATES.get(current_progress, f"Unknown currentProgress ({current_progress})")
-            self._state_attributes["ETA"] = order["feedCards"][0]["status"]["title"]
-            self._state_attributes["Order Status Description"] = order["feedCards"][0]["status"]["timelineSummary"]
-            self._state_attributes["Order Status"] = order["feedCards"][0]["status"]["currentProgress"]
-            self._state_attributes["Restaurant Name"] = order["activeOrderOverview"]["title"]
-            self._state_attributes["Courier Name"] = order["contacts"][0]["title"]
-
+            self.parse_order(order)
             map_entity = order["feedCards"][1].get("mapEntity")
             if map_entity and map_entity[0]:
                 self._state_attributes["Courier Location"] = f'{map_entity[0]["latitude"]},{map_entity[0]["longitude"]}'
 
         else:
-            _LOGGER.error("Order index out of range")
+            self._msg = "目前沒有訂單"
+            _LOGGER.debug("Order index out of range")
+
+    def parse_order(self, order):
+        info = order["feedCards"][0]
+        current_progress = info["status"]["currentProgress"]
+        self._state = ORDER_STATES.get(current_progress, unknown_progress := f"訂單狀態不明 ({current_progress})")
+        self._state_attributes["外送員名稱"] = deliver = order["contacts"][0]["title"]
+        self._state_attributes["餐廳名稱"] = restaurant = order["activeOrderOverview"]["title"]
+        self._state_attributes["餐點狀態"] = self._state
+        self._state_attributes["訂餐時間"] = order_time = info[0]["status"]["title"]
+        self._state_attributes["額外描述"] = sub_msg = info[0]["status"]["statusSummary"]
+        self._state_attributes["訂餐金額"] = money = info[5]["orderSummary"]["total"].replace(".00", "")
+
+        self._msg = f"訂單 {restaurant}，訂餐時間：{order_time}。\n"
+        match current_progress:
+            case 1:
+                self._msg += "店家正在準備餐點。"
+            case 2:
+                self._msg += f"外送員 {deliver} 正前往取餐。"
+            case 3:
+                self._msg += f"外送員 {deliver} 正在送餐中。"
+            case 4:
+                self._msg += f"外送員 {deliver} 即將抵達，金額 {money}。"
+            case _:
+                self._msg += unknown_progress
+
+        if (mt := "Lastest arrival by ") in sub_msg["text"]:
+            self._msg += f"\n預估最晚送達時間：{sub_msg['text'].replace(mt,'')}"
