@@ -89,12 +89,12 @@ class UberEatsOrderSummarySensor(Entity):
         return self._orders
 
     def update(self):
-        # response = self._api.get_deliveries()
-        # self._orders = response["data"].get("orders", [])
+        response = self._api.get_deliveries()
+        self._orders = response["data"].get("orders", [])
         # debug
-        from pathlib import Path
+        # from pathlib import Path
 
-        self._orders = eval(Path("test2.json").read_text(encoding="utf-8-sig"))[0]["data"]["orders"]
+        # self._orders = eval(Path("test2.json").read_text(encoding="utf-8-sig"))[0]["data"]["orders"]
         # -end debug
         self._state = len(self._orders)
 
@@ -162,15 +162,15 @@ class UberEatsDeliveriesSensor(Entity):
             _LOGGER.debug("Order index out of range")
 
     def parse_order(self, order):
-        info = order["feedCards"][0]
-        current_progress = info["status"]["currentProgress"]
+        info = order["feedCards"]
+        current_progress = info[0]["status"]["currentProgress"]
         self._state = ORDER_STATES.get(current_progress, unknown_progress := f"訂單狀態不明 ({current_progress})")
         self._state_attributes["外送員名稱"] = deliver = order["contacts"][0]["title"]
         self._state_attributes["餐廳名稱"] = restaurant = order["activeOrderOverview"]["title"]
         self._state_attributes["餐點狀態"] = self._state
         self._state_attributes["訂餐時間"] = order_time = info[0]["status"]["title"]
-        self._state_attributes["額外描述"] = sub_msg = info[0]["status"]["statusSummary"]
         self._state_attributes["訂餐金額"] = money = info[5]["orderSummary"]["total"].replace(".00", "")
+        self._state_attributes["額外描述"] = sub_msg = info[0]["status"]["statusSummary"]["text"]
 
         self._msg = f"訂單 {restaurant}，訂餐時間：{order_time}。\n"
         match current_progress:
@@ -185,5 +185,5 @@ class UberEatsDeliveriesSensor(Entity):
             case _:
                 self._msg += unknown_progress
 
-        if (mt := "Lastest arrival by ") in sub_msg["text"]:
-            self._msg += f"\n預估最晚送達時間：{sub_msg['text'].replace(mt,'')}"
+        if (mt := "Lastest arrival by ") in sub_msg:
+            self._msg += f"\n預估最晚送達時間：{sub_msg.replace(mt,'')}"
