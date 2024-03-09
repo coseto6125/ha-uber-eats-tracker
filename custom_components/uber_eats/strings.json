@@ -12,9 +12,6 @@
         },
         "error": {
             "invalid_sid_token": "無效的 sid_token"
-        },
-        "abort": {
-            "already_configured": "UberEats 已經被配置"
         }
     },
     "options": {
@@ -25,6 +22,9 @@
                 "data": {
                     "sid_token": "sid_token"
                 }
+            },
+            "error": {
+                "invalid_sid_token": "無效的 sid_token"
             }
         }
     }

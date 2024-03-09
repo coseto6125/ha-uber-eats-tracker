@@ -21,6 +21,9 @@ class UberEatsOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional("sid_token", default=""): str,
                 }
             ),
+            description_placeholders={
+                "sid_token": "請輸入要重設的 sid_token",
+            },
         )
 
 
@@ -37,6 +40,9 @@ class UberEatsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         vol.Required("sid_token"): str,
                     }
                 ),
+                description_placeholders={
+                    "sid_token": "請輸入要設置的 sid_token",
+                },
             )
 
         errors = {}
