@@ -35,18 +35,17 @@ class UberEatsOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         errors = {}
+        sid_token = self.config_entry.options.get("sid_token", "")
         if user_input is not None:
             if sid_token := user_input.get("sid_token"):
                 if self._validate_sid_token(sid_token) is False:
                     errors = {"sid_token": "invalid_sid_token"}
                 if not errors:
                     return self.async_create_entry(title="Uber Eats Tracker", data=user_input)
-        data = self.config_entry.options.get("sid_token", "")
         schema = {
             vol.Required(
                 "sid_token",
-                default=data,
-                description={"suggested_value": data},
+                description={"suggested_value": sid_token},
             ): str,
         }
         return self.async_show_form(step_id="init", errors=errors, data_schema=vol.Schema(schema))
