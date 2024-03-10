@@ -15,7 +15,7 @@ class UberEatsOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(title="Uber Eats Tracker", data=user_input)
         data = self.config_entry.options.get("sid_token", "")
         schema = {
-            vol.Optional("sid_token", default=data): str,
+            vol.Required("sid_token", default=data): str,
         }
         return self.async_show_form(step_id="init", data_schema=vol.Schema(schema))
 
