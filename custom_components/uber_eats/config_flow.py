@@ -12,8 +12,9 @@ class UberEatsOptionsFlow(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         
-        if validate_sid_token(user_input["sid_token"]):
-            return self.async_create_entry(title="Uber Eats Tracker", data=user_input)
+        if user_input is not None:
+            if validate_sid_token(user_input["sid_token"]):
+                return self.async_create_entry(title="Uber Eats Tracker", data=user_input)
         
         data = self.config_entry.options.get("sid_token", "")
         errors = {"sid_token":"invalid_uuid_format"}
