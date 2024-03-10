@@ -11,13 +11,14 @@ class UberEatsOptionsFlow(config_entries.OptionsFlow):
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
-        
+        errors = {}
+
         if user_input is not None:
-            if validate_sid_token(user_input["sid_token"]):
+            if not validate_sid_token(user_input["sid_token"]):
+                errors["sid_token"] = "invalid_sid_token"
+            if not errors:
                 return self.async_create_entry(title="Uber Eats Tracker", data=user_input)
-        
         data = self.config_entry.options.get("sid_token", "")
-        errors = {"sid_token":"invalid_uuid_format"}
         schema = {
             vol.Required(
                 "sid_token",
@@ -25,11 +26,13 @@ class UberEatsOptionsFlow(config_entries.OptionsFlow):
                 description={"suggested_value": "sid_token"},
             ): str,
         }
-        return self.async_show_form(step_id="init", data_schema=vol.Schema(schema), errors=errors)
+        return self.async_show_form(step_id="init", errors=errors, data_schema=vol.Schema(schema))
+
 
 def validate_sid_token(sid_token):
     """Validate the sid_token."""
     return sid_token.startswith("QA.") and len(sid_token) > 150
+
 
 class UberEatsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Uber Eats."""
@@ -50,7 +53,6 @@ class UberEatsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
         errors = {}
-
 
         if not validate_sid_token(user_input["sid_token"]):
             errors["sid_token"] = "invalid_sid_token"
