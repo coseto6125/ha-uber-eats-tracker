@@ -1,31 +1,25 @@
 {
-    "title": "UberEats",
-    "config": {
-        "step": {
-            "user": {
-                "title": "連接到你的 UberEats",
-                "description": "請輸入你的 sid_token",
-                "data": {
-                    "sid_token": "sid_token"
-                }
-            }
-        },
-        "error": {
-            "invalid_sid_token": "無效的 sid_token"
-        }
+  "config": {
+    "step": {
+      "user": {
+        "description": "您想設置 UberEats 訂單追蹤器嗎?"
+      }
     },
-    "options": {
-        "step": {
-            "init": {
-                "title": "修改 sid",
-                "description": "請輸入新的 sid_token",
-                "data": {
-                    "sid_token": "sid_token"
-                }
-            },
-            "error": {
-                "invalid_sid_token": "無效的 sid_token"
-            }
-        }
+    "error": {
+      "invalid_sid_token": "無效的 sid_token"
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "description": "請輸入新的 sid_token",
+        "data": {
+          "sid_token": "輸入你的 sid_token"
+        }
+      },
+      "error": {
+        "invalid_sid_token": "無效的 sid_token"
+      }
+    }
+  }
 }
