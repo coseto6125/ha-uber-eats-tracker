@@ -72,7 +72,7 @@ class UberEatsOrderSummarySensor(Entity):
     @property
     def state(self):
         return self._state
-    
+
     @property
     def orders(self):
         return self._orders
@@ -83,7 +83,11 @@ class UberEatsOrderSummarySensor(Entity):
 
     def update(self):
         response = self._api.get_deliveries()
-        self._orders = response["data"].get("orders", [])
+        try:
+            self._orders = response["data"].get("orders", [])
+        except KeyError as e:
+            _LOGGER.error(f"Failed to fetch orders: {e}\n {response}")
+            self._orders = []
         # debug
         # from pathlib import Path
 
