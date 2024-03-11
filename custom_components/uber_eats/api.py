@@ -18,7 +18,7 @@ class UberEatsApi:
 
         data = {"orderUuid": None, "timezone": self._timezone, "showAppUpsellIllustration": True}
         response = post(self._url_base, headers=headers, json=data)
-        data = {}
+        data = {"data": "Failed to fetch deliveries."}
         if response.status_code == 200:
             data = response.json()
             if not data:
