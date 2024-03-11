@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 
 from requests import post
 
@@ -24,8 +25,9 @@ class UberEatsApi:
             if not data:
                 _LOGGER.warning("Fetched deliveries successfully, but did not find any")
             return data
-        _LOGGER.error("Failed to fetch deliveries")
-        return data
+        _LOGGER.warning(f"Failed to fetch deliveries: {response.status_code}\n{response.text}")
+        sleep(3)
+        return self.get_deliveries()
 
     def check_auth(self):
         """Check to see if our SID is valid."""
