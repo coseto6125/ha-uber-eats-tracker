@@ -25,8 +25,8 @@ class UberEatsApi:
             if not data:
                 _LOGGER.warning("Fetched deliveries successfully, but did not find any")
             return data
-        if response.status_code != 502:
-            _LOGGER.warning(f"resp: {response.text}")
+        # if response.status_code != 502:
+        #     _LOGGER.warning(f"resp: {response.text}")
         _LOGGER.warning(f"Failed to fetch deliveries: {response.status_code}")
         sleep(3)
         return self.get_deliveries()
