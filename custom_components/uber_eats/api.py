@@ -1,5 +1,4 @@
 import logging
-from time import sleep
 
 from requests import post
 
