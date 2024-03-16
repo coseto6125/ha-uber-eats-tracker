@@ -28,8 +28,7 @@ class UberEatsApi:
         # if response.status_code != 502:
         #     _LOGGER.warning(f"resp: {response.text}")
         _LOGGER.warning(f"Failed to fetch deliveries: {response.status_code}")
-        sleep(3)
-        return self.get_deliveries()
+        return 0
 
     def check_auth(self):
         """Check to see if our SID is valid."""

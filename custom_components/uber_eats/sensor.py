@@ -82,19 +82,20 @@ class UberEatsOrderSummarySensor(Entity):
         return {"訂單": self._state}
 
     def update(self):
-        response = self._api.get_deliveries()
-        try:
-            self._orders = response["data"].get("orders", [])
-        except KeyError as e:
-            _LOGGER.error(f"Failed to fetch orders: {e}\n {response}")
-            self._orders = []
-        # debug
-        # from pathlib import Path
+        if response := self._api.get_deliveries():
+            try:
+                self._orders = response["data"].get("orders", [])
+            except KeyError as e:
+                _LOGGER.error(f"Failed to fetch orders: {e}\n {response}")
+                self._orders = []
+            # debug
+            # from pathlib import Path
 
-        # self._orders = eval(Path("test2.json").read_text(encoding="utf-8-sig"))[0]["data"]["orders"]
-        # -end debug
-        self._state = len(self._orders)
-
+            # self._orders = eval(Path("test2.json").read_text(encoding="utf-8-sig"))[0]["data"]["orders"]
+            # -end debug
+            self._state = len(self._orders)
+        else:
+            self._state = 0
 
 class UberEatsDeliveriesSensor(Entity):
 
